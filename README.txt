@@ -4,6 +4,8 @@
 About
 ======
 
+*** THIS README IS A FORK FROM signal11's VERSION. CHANGES ARE MARKED ***
+
 HIDAPI is a multi-platform library which allows an application to interface
 with USB and Bluetooth HID-Class devices on Windows, Linux, FreeBSD, and Mac
 OS X.  HIDAPI can be either built as a shared library (.so or .dll) or
@@ -29,6 +31,11 @@ hidraw nodes associated with them.  Keyboards, mice, and some other devices
 which are blacklisted from having hidraw nodes will not work. Fortunately,
 for nearly all the uses of hidraw, this is not a problem.
 
+*** The original version did not recover the "Usage Page" and "Usage" ***
+*** fields. This version introduces a patch that works with kernels   ***
+*** >= 2.6.38 that introduce the report_descriptor sysfs file         ***
+
+
 Linux/FreeBSD/libusb (libusb/hid-libusb.c):
 This back-end uses libusb-1.0 to communicate directly to a USB device. This
 back-end will of course not work with Bluetooth devices.
@@ -37,6 +44,9 @@ HIDAPI also comes with a Test GUI. The Test GUI is cross-platform and uses
 Fox Toolkit (http://www.fox-toolkit.org).  It will build on every platform
 which HIDAPI supports.  Since it relies on a 3rd party library, building it
 is optional but recommended because it is so useful when debugging hardware.
+
+*** Building the GUI has not yet been integrated into the CMake build ***
+*** process. Working on that...                                       ***
 
 What Does the API Look Like?
 =============================
@@ -124,26 +134,28 @@ Download
 HIDAPI can be downloaded from github
 	git clone git://github.com/signal11/hidapi.git
 
+*** This modified version is available at                             ***
+*** https://github.com/jbliesener/hidapi                              ***
+
 Build Instructions
 ===================
 
-This section is long. Don't be put off by this. It's not long because it's
-complicated to build HIDAPI; it's quite the opposite.  This section is long
-because of the flexibility of HIDAPI and the large number of ways in which
-it can be built and used.  You will likely pick a single build method.
-
-HIDAPI can be built in several different ways. If you elect to build a
-shared library, you will need to build it from the HIDAPI source
-distribution.  If you choose instead to embed HIDAPI directly into your
-application, you can skip the building and look at the provided platform
-Makefiles for guidance.  These platform Makefiles are located in linux/
-libusb/ mac/ and windows/ and are called Makefile-manual.  In addition,
-Visual Studio projects are provided.  Even if you're going to embed HIDAPI
-into your project, it is still beneficial to build the example programs.
-
+*** The original version used GNU autotools. This version uses        ***
+*** CMake (www.cmake.org) as cross-platform build tool. Personally,   ***
+*** I find CMake easier to use, as a single build description file    ***
+*** is used for all platforms and CMake generates platform-specific   ***
+*** build files in a directory called "build/<target-platform>" for   ***
+*** each target platform. CMake also helps in finding prerequisites.  ***
 
 Prerequisites:
 ---------------
+
+***     CMake:                                                        ***
+***     ------                                                        ***
+***     You WILL need CMake (www.cmake.org). You can download it      ***
+***     or install it through your favorite package manager. CMake    ***
+***     is available for any platform and comes with a lot of helper  ***
+***     packages.                                                     ***
 
 	Linux:
 	-------
@@ -151,10 +163,13 @@ Prerequisites:
 	libusb and optionally Fox-toolkit (for the test GUI). On
 	Debian/Ubuntu systems these can be installed by running:
 	    sudo apt-get install libudev-dev libusb-1.0-0-dev libfox-1.6-dev
+***     Fedora/RedHat uses                                            ***
+***         sudo yum install libgudev1-devel libusb-devel fox-devel   ***
+***     Also, make sure that you have pkgconfig installed.            ***
 
-	If you downloaded the source directly from the git repository (using
-	git clone), you'll need Autotools:
-	    sudo apt-get install autotools-dev autoconf automake libtool
+*************************************************************************
+*** TODO: CHECK FOLLOWING SECTIONS                                    ***
+*************************************************************************
 
 	FreeBSD:
 	---------
@@ -205,131 +220,110 @@ Prerequisites:
 	Again, this step is not required if you do not wish to build the
 	test GUI.
 
+*************************************************************************
+*** TODO: END CHECK SECTION                                           ***
+*************************************************************************
+
 
 Building HIDAPI into a shared library on Unix Platforms:
 ---------------------------------------------------------
 
 On Unix-like systems such as Linux, FreeBSD, Mac, and even Windows, using
 Mingw or Cygwin, the easiest way to build a standard system-installed shared
-library is to use the GNU Autotools build system.  If you checked out the
-source from the git repository, run the following:
+library is to use 
+***               CMake. Just create a directory "build" and, within  ***
+*** that, your target-specific directory:                             ***
+***                                                                   ***
+***     md build                                                      ***
+***     md build/linux64                                              ***
+***     cd build/linux64                                              ***
+***                                                                   ***
+*** Then, start cmake and the build process:                          ***
+***                                                                   ***
+***     cmake ../..        (this reads and processes CMakeLists.txt)  ***
+***     make                                                          ***
+***                                                                   ***
+*** This builds your library in a platform-specific subdirectory      ***
+*** under build/libs. The directory name is compatible with jna (Java ***
+*** Native Access, see https://github.com/twall/jna), but that's only ***
+*** for those who want to embed hidapi into projects like hid4jave    ***
+*** (see https://github.com/gary-rowe/hid4java).                      ***
+***
 
-	./bootstrap
-	./configure
-	make
-	make install     <----- as root, or using sudo
-
-If you downloaded a source package (ie: if you did not run git clone), you
-can skip the ./bootstrap step.
-
-./configure can take several arguments which control the build. The two most
-likely to be used are:
-	--enable-testgui
-		Enable build of the Test GUI. This requires Fox toolkit to
-		be installed.  Instructions for installing Fox-Toolkit on
-		each platform are in the Prerequisites section above.
-
-	--prefix=/usr
-		Specify where you want the output headers and libraries to
-		be installed. The example above will put the headers in
-		/usr/include and the binaries in /usr/lib. The default is to
-		install into /usr/local which is fine on most systems.
-
-Building the manual way on Unix platforms:
--------------------------------------------
-
-Manual Makefiles are provided mostly to give the user and idea what it takes
-to build a program which embeds HIDAPI directly inside of it. These should
-really be used as examples only. If you want to build a system-wide shared
-library, use the Autotools method described above.
-
-	To build HIDAPI using the manual makefiles, change to the directory
-	of your platform and run make. For example, on Linux run:
-		cd linux/
-		make -f Makefile-manual
-
-	To build the Test GUI using the manual makefiles:
-		cd testgui/
-		make -f Makefile-manual
 
 Building on Windows:
 ---------------------
 
-To build the HIDAPI DLL on Windows using Visual Studio, build the .sln file
-in the windows/ directory.
+*** Right now, the build process under Windows requires MinGW32 or    ***
+*** MinGW64 and follows the same steps as the abovementioned Unix     ***
+*** build.                                                            ***
 
-To build the Test GUI on windows using Visual Studio, build the .sln file in
-the testgui/ directory.
+Building on OSX (Darwin):
+-------------------------
 
-To build HIDAPI using MinGW or Cygwin using Autotools, use the instructions
-in the section titled "Building HIDAPI into a shared library on Unix
-Platforms" above.  Note that building the Test GUI with MinGW or Cygwin will
-require the Windows procedure in the Prerequisites section above (ie:
-hidapi-externals.zip).
-
-To build HIDAPI using MinGW using the Manual Makefiles, see the section
-"Building the manual way on Unix platforms" above.
-
-HIDAPI can also be built using the Windows DDK (now also called the Windows
-Driver Kit or WDK). This method was originally required for the HIDAPI build
-but not anymore. However, some users still prefer this method. It is not as
-well supported anymore but should still work. Patches are welcome if it does
-not. To build using the DDK:
-
-   1. Install the Windows Driver Kit (WDK) from Microsoft.
-   2. From the Start menu, in the Windows Driver Kits folder, select Build
-      Environments, then your operating system, then the x86 Free Build
-      Environment (or one that is appropriate for your system).
-   3. From the console, change directory to the windows/ddk_build/ directory,
-      which is part of the HIDAPI distribution.
-   4. Type build.
-   5. You can find the output files (DLL and LIB) in a subdirectory created
-      by the build system which is appropriate for your environment. On
-      Windows XP, this directory is objfre_wxp_x86/i386.
+*** Install XCode and CMake and follow the Unix instructions above.   ***
 
 Cross Compiling
 ================
 
-This section talks about cross compiling HIDAPI for Linux using autotools.
-This is useful for using HIDAPI on embedded Linux targets.  These
-instructions assume the most raw kind of embedded Linux build, where all
-prerequisites will need to be built first.  This process will of course vary
-based on your embedded Linux build system if you are using one, such as
-OpenEmbedded or Buildroot.
-
-For the purpose of this section, it will be assumed that the following
-environment variables are exported.
-
-	$ export STAGING=$HOME/out
-	$ export HOST=arm-linux
-
-STAGING and HOST can be modified to suit your setup.
-
-Prerequisites
---------------
-
-Note that the build of libudev is the very basic configuration.
-
-Build Libusb. From the libusb source directory, run:
-	./configure --host=$HOST --prefix=$STAGING
-	make
-	make install
-
-Build libudev. From the libudev source directory, run:
-	./configure --disable-gudev --disable-introspection --disable-hwdb \
-		 --host=$HOST --prefix=$STAGING
-	make
-	make install
-
-Building HIDAPI
-----------------
-
-Build HIDAPI:
-
-	PKG_CONFIG_DIR= \
-	PKG_CONFIG_LIBDIR=$STAGING/lib/pkgconfig:$STAGING/share/pkgconfig \
-	PKG_CONFIG_SYSROOT_DIR=$STAGING \
-	./configure --host=$HOST --prefix=$STAGING
+This section talks about cross compiling HIDAPI 
+***                                             on Linux64 hosts,     ***
+*** using CMake and associated "Toolchain" files. Actually, the       ***
+*** process is quite easy: After installing the prerequisites, you    ***
+*** create a "build" directory and, below that, a specific directory  ***
+*** for each target. In each of those target directories, you call    ***
+*** CMake, specifying a "Toolchain" file that tells CMake which       ***
+*** compiler and libraries it should use.                             ***
+***                                                                   ***
+*** Toolchain files are provided for targets that run on Win32 (using ***
+*** i686-w64-mingw32 as compiler), Win64 (using x86_64-w64-mingw32),  ***
+*** Linux32 (using the "-m32" gcc/g++ parameter) and even for OSX     ***
+*** (using osxcross - see https://github.com/tpoechtrager/osxcross)   ***
+***                                                                   ***
+*** For example, if you want to compile HIDAPI for Win64, you would   ***
+*** type the following commands on a Linux64 host:                    ***
+***                                                                         ***
+***   md build                                                              ***
+***   md build/win32                                                        ***
+***   cd build/win32                                                        ***
+***   cmake -DCMAKE_TOOLCHAIN_FILE=../../cmake/i686-w64-mingw32.cmake ../.. ***
+***   make                                                                  ***
+***                                                                         ***
+*** This would create a file build/libs/win32-x86/hidapi.dll that runs***
+*** under Win32.                                                      ***
+***                                                                   ***
+*** The included file "build.sh" tries to build all four cross-builds ***
+*** plus a native Linux64 build.                                      ***
+***                                                                   ***
+*** Cross-compile Prerequisites                                       ***
+*** ---------------------------                                       ***
+***                                                                   ***
+*** However, in order to be able to cross-compile, you need some pre- ***
+*** requisites:                                                       ***
+***                                                                   ***
+*** For Win32: You must install mingw32 and mingw32-headers. If       ***
+***            mingw32 is NOT installed in /usr/i686-w64-mingw32,     ***
+***            please configure its path in                           ***
+***            cmake/i686-w64-mingw32.cmake.                          ***
+***                                                                   ***
+*** For Win64: You must install mingw64 and mingw64-headers. If       ***
+***            mingw64 is NOT installed in /usr/x86_64-w64-mingw32,   ***
+***            please configure its path in                           ***
+***            cmake/x86_64-w64-mingw32.cmake.                        ***
+***                                                                   ***
+*** For Linux32: You must install glibc-devel, libcstd++-devel and    ***
+***              either libudev and libudev-devel (Fedora: libgudev1  ***
+***              and libgudev1-devel) or libusb and libusb-devel for  ***
+***              the i686-architecture.                               ***
+***                                                                   ***
+*** For OSX (Darwin): The osxcross project (see                       ***
+***                   https://github.com/tpoechtrager/osxcross) uses  ***
+***                   Linux' CLang compiler and provides additional   ***
+***                   tools to create OSX libraries and executables.  ***
+***                   You must install and build osxcross, as well as ***
+***                   an OSX SDK (see osxcross page how to do this).  ***
+***                   Finally,  you need to configure the SDK path in ***
+***                   cmake/osx.cmake.                                ***
 
 
 Signal 11 Software - 2010-04-11
@@ -337,3 +331,6 @@ Signal 11 Software - 2010-04-11
                      2011-09-10
                      2012-05-01
                      2012-07-03
+
+*** Jorg Bliesener - 2015-01-02                                       ***
+
