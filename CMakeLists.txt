@@ -237,13 +237,16 @@ endif()
 
 # Set target directory
 
-set (_output_dir "${CMAKE_BINARY_DIR}/../libs/${_output_dir}")
+set (_lib_output_dir "${CMAKE_BINARY_DIR}/../libs/${_output_dir}")
+set (_exe_output_dir "${CMAKE_BINARY_DIR}/../progs/${_output_dir}")
+
 
 # Inform user
 
 message(STATUS "Libraries to link: ${_libraries}")
 message(STATUS "Library Architecture will be: ${_architecture}")
-message(STATUS "Output directory will be ${_output_dir}")
+message(STATUS "Output directory for libraries will be ${_lib_output_dir}")
+message(STATUS "Output directory for programs  will be ${_exe_output_dir}")
 
 # Compile & link
 
@@ -252,8 +255,8 @@ add_library(hidDeviceLibStatic STATIC ${_sources})
 target_link_libraries(hidDeviceLib ${_libraries})
 
 set_target_properties(hidDeviceLib PROPERTIES OUTPUT_NAME "hidapi")
-set_target_properties(hidDeviceLib PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${_output_dir})
-set_target_properties(hidDeviceLib PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${_output_dir})
+set_target_properties(hidDeviceLib PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${_lib_output_dir})
+set_target_properties(hidDeviceLib PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${_lib_output_dir})
 
 if(WIN32)
     set_target_properties(hidDeviceLib PROPERTIES PREFIX "")
@@ -261,4 +264,4 @@ endif()
 
 add_executable(hidTest src/hidtest/hidtest.cpp)
 target_link_libraries(hidTest hidDeviceLibStatic ${_libraries})
-
+set_target_properties(hidTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${_exe_output_dir})

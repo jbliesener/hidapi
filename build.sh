@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 #
 # This shell file builds the 32 and 64 bit library files for linux and windows,
 # as well as the OSX (Darwin) libraries and and places them in the appropriate subdirectories 
@@ -31,8 +31,9 @@ LINUX_DRIVER=libudev
 CM_FLAG=""
 DIR_SUFFIX=""
 
-rm -rf build
-mkdir build
+# clean target directories
+find build -mindepth 1 -maxdepth 1 -type d -not \( -name 'libs' -or -name 'progs' \) -print0 | xargs -0 -I {} rm -rf {}
+
 mkdir build/win32
 mkdir build/win64
 mkdir build/osx
